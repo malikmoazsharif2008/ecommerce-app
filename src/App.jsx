@@ -3,13 +3,18 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
+<<<<<<< HEAD
 import ProductDetails from "./pages/ProductDetails";
 import Products from "./pages/Products";
 import AdminLayout from "./admin/AdminLayout";
+=======
+
+>>>>>>> ef21d80f1a0a699f22ad804ef3fb6189f57e378f
 import Dashboard from "./admin/Dashboard";
 import AddProduct from "./admin/AddProduct";
 import ManageProducts from "./admin/ManageProducts";
 import Orders from "./admin/Orders";
+import Products from "./pages/Products"; 
 
 function App() {
   return (
@@ -22,6 +27,11 @@ function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
+<<<<<<< HEAD
+=======
+      
+        <Route path="/products" element={<Products />} />
+>>>>>>> ef21d80f1a0a699f22ad804ef3fb6189f57e378f
         
 
         {/* Admin Layout Routes */}
@@ -34,6 +44,10 @@ function App() {
       </Routes>
     </Router>
   );
+<<<<<<< HEAD
 }
 
 export default App;
+=======
+}
+>>>>>>> ef21d80f1a0a699f22ad804ef3fb6189f57e378f
