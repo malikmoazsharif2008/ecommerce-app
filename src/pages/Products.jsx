@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Box, Typography, Button, Card, CardContent, CardMedia, TextField, Pagination, Snackbar } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -154,5 +155,13 @@ export default function Products() {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
     </Box>
+=======
+export default function Products() {
+  return (
+    <div style={{ padding: "2rem" }}>
+      <h1>🛒 Products Page</h1>
+      <p>All our amazing products will be listed here soon.</p>
+    </div>
+>>>>>>> 3b00e40 (Added admin layout and dashboard functionality)
   );
 }

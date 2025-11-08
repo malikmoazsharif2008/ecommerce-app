@@ -21,7 +21,11 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
+<<<<<<< HEAD
       
+=======
+        <Route path="/register" element={<Register />} />
+>>>>>>> 3b00e40 (Added admin layout and dashboard functionality)
         <Route path="/products" element={<Products />} />
         
 
