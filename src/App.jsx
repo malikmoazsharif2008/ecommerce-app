@@ -1,53 +1,42 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
+import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
-<<<<<<< HEAD
-import ProductDetails from "./pages/ProductDetails";
-import Products from "./pages/Products";
 import AdminLayout from "./admin/AdminLayout";
-=======
-
->>>>>>> ef21d80f1a0a699f22ad804ef3fb6189f57e378f
 import Dashboard from "./admin/Dashboard";
 import AddProduct from "./admin/AddProduct";
 import ManageProducts from "./admin/ManageProducts";
 import Orders from "./admin/Orders";
 import Products from "./pages/Products"; 
 
-function App() {
+export default function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Navbar />
       <Routes>
-        {/* Public Routes */}
+        {/* USER ROUTES */}
+       
         <Route path="/" element={<Home />} />
-        <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
-<<<<<<< HEAD
-=======
-      
+       
         <Route path="/products" element={<Products />} />
->>>>>>> ef21d80f1a0a699f22ad804ef3fb6189f57e378f
         
 
-        {/* Admin Layout Routes */}
+        {/* ADMIN ROUTES */}
         <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="add-product" element={<AddProduct />} />
-          <Route path="manage-products" element={<ManageProducts />} />
-          <Route path="orders" element={<Orders />} />
-        </Route>
-      </Routes>
-    </Router>
-  );
-<<<<<<< HEAD
-}
+  <Route path="dashboard" element={<Dashboard />} />
+  <Route path="add-product" element={<AddProduct />} />
+  <Route path="manage-products" element={<ManageProducts />} />
+  <Route path="orders" element={<Orders />} />
+ 
 
-export default App;
-=======
-}
->>>>>>> ef21d80f1a0a699f22ad804ef3fb6189f57e378f
+</Route>
+
+      </Routes>
+    </BrowserRouter>
+  );
+} 

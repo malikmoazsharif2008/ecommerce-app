@@ -1,69 +1,125 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
   Paper,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   Button,
+  CircularProgress,
+  MenuItem,
+  TextField,
 } from "@mui/material";
-
-const mockOrders = [
-  { id: 101, customer: "Ali", total: "$250", status: "Pending" },
-  { id: 102, customer: "Sara", total: "$480", status: "Delivered" },
-  { id: 103, customer: "Moaz", total: "$320", status: "Pending" },
-];
+import { db } from "../firebaseConfig";
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 export default function Orders() {
-  const handleStatusChange = (id) => {
-    alert(`✅ Order ${id} marked as delivered!`);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(null);
+
+  const orderStatuses = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
+
+  // 🔹 Fetch orders from Firestore
+  const fetchOrders = async () => {
+    setLoading(true);
+    const snapshot = await getDocs(collection(db, "orders"));
+    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setOrders(list);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  // 🔹 Update order status
+  const handleStatusChange = async (id, newStatus) => {
+    setUpdating(id);
+    await updateDoc(doc(db, "orders", id), {
+      status: newStatus,
+      updatedAt: serverTimestamp(),
+    });
+    alert(`✅ Order status updated to "${newStatus}"`);
+    setUpdating(null);
+    fetchOrders();
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: "#f1f1f3", minHeight: "100vh" }}>
-      <Typography variant="h4" color="#303e4c" fontWeight={600} mb={3}>
-        Manage Orders
+    <Box>
+      <Typography variant="h5" sx={{ mb: 2, color: "#303e4c" }}>
+        📦 Manage Orders
       </Typography>
-      <Paper sx={{ borderRadius: 3 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#303e4c" }}>
-              <TableCell sx={{ color: "#fff" }}>Order ID</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Customer</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Total</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Status</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {mockOrders.map((o) => (
-              <TableRow key={o.id}>
-                <TableCell>{o.id}</TableCell>
-                <TableCell>{o.customer}</TableCell>
-                <TableCell>{o.total}</TableCell>
-                <TableCell>{o.status}</TableCell>
-                <TableCell>
-                  {o.status === "Pending" && (
-                    <Button
-                      variant="contained"
-                      sx={{
-                        backgroundColor: "#1976d2",
-                        "&:hover": { backgroundColor: "#135cb1" },
-                      }}
-                      onClick={() => handleStatusChange(o.id)}
-                    >
-                      Mark Delivered
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+
+      {loading ? (
+        <CircularProgress />
+      ) : orders.length === 0 ? (
+        <Typography>No orders found 💤</Typography>
+      ) : (
+        orders.map((o) => (
+          <Paper
+            key={o.id}
+            sx={{
+              p: 2,
+              mb: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
+            <Typography variant="subtitle1">
+              🧾 <b>Order ID:</b> {o.id}
+            </Typography>
+            <Typography>
+              👤 <b>Customer:</b> {o.userName || "Unknown"}
+            </Typography>
+            <Typography>
+              💬 <b>Items:</b>{" "}
+              {o.items && o.items.length > 0
+                ? o.items.map((item) => `${item.name} (x${item.qty})`).join(", ")
+                : "No items"}
+            </Typography>
+            <Typography>
+              💰 <b>Total:</b> {o.totalAmount || 0} PKR
+            </Typography>
+            <Typography>
+              📅 <b>Date:</b>{" "}
+              {o.createdAt?.toDate
+                ? o.createdAt.toDate().toLocaleString()
+                : "N/A"}
+            </Typography>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <TextField
+                select
+                size="small"
+                value={o.status || "Pending"}
+                onChange={(e) => handleStatusChange(o.id, e.target.value)}
+                sx={{ width: 180 }}
+                disabled={updating === o.id}
+              >
+                {orderStatuses.map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <Button
+                variant="outlined"
+                onClick={() => fetchOrders()}
+                disabled={updating === o.id}
+              >
+                🔄 Refresh
+              </Button>
+            </Box>
+          </Paper>
+        ))
+      )}
     </Box>
   );
 }
