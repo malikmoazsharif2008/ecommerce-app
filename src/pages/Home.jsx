@@ -4,9 +4,9 @@ import CategoryIcon from '@mui/icons-material/Category'; // example icon
 
 // Example featured products
 const products = [
-  { id: 1, name: "Product 1", image: "https://via.placeholder.com/150", price: "$50" },
-  { id: 2, name: "Product 2", image: "https://via.placeholder.com/150", price: "$60" },
-  { id: 3, name: "Product 3", image: "https://via.placeholder.com/150", price: "$70" },
+  { id: 1, name: "Product 1", image: "", price: "$50" },
+  { id: 2, name: "Product 2", image: "", price: "$60" },
+  { id: 3, name: "Product 3", image: "", price: "$70" },
 ];
 
 // Example categories

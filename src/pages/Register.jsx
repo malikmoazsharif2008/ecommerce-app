@@ -3,8 +3,6 @@ import {
   Typography,
   TextField,
   Button,
-  FormControlLabel,
-  Checkbox,
   Snackbar,
   InputAdornment,
   IconButton,
@@ -15,24 +13,34 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-export default function Login() {
-  const [formData, setFormData] = useState({ email: "", password: "", remember: false });
+export default function Register() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const validate = () => {
     let tempErrors = {};
+    if (!formData.name) tempErrors.name = "Full name is required";
     if (!formData.email) tempErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) tempErrors.email = "Email is invalid";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) tempErrors.email = "Invalid email address";
     if (!formData.password) tempErrors.password = "Password is required";
+    else if (formData.password.length < 6) tempErrors.password = "Password must be at least 6 characters";
+    if (formData.confirmPassword !== formData.password)
+      tempErrors.confirmPassword = "Passwords do not match";
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
@@ -43,11 +51,12 @@ export default function Login() {
 
     setLoading(true);
     setTimeout(() => {
-      const user = { email: formData.email, loggedIn: true };
-      localStorage.setItem("user", JSON.stringify(user));
-      setSnackbar({ open: true, message: "Login successful!", severity: "success" });
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      users.push({ name: formData.name, email: formData.email, password: formData.password });
+      localStorage.setItem("users", JSON.stringify(users));
+      setSnackbar({ open: true, message: "Registration successful!", severity: "success" });
       setLoading(false);
-      setTimeout(() => navigate("/"), 1000);
+      setTimeout(() => navigate("/login"), 1000);
     }, 1200);
   };
 
@@ -66,7 +75,7 @@ export default function Login() {
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          maxWidth: 400,
+          maxWidth: 420,
           width: "100%",
           p: 4,
           borderRadius: 3,
@@ -83,8 +92,19 @@ export default function Login() {
             fontWeight: 700,
           }}
         >
-          Welcome Back 👋
+          Create Account ✨
         </Typography>
+
+        <TextField
+          label="Full Name"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          error={!!errors.name}
+          helperText={errors.name}
+          fullWidth
+          sx={{ mb: 2 }}
+        />
 
         <TextField
           label="Email"
@@ -106,7 +126,7 @@ export default function Login() {
           error={!!errors.password}
           helperText={errors.password}
           fullWidth
-          sx={{ mb: 1 }}
+          sx={{ mb: 2 }}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -118,27 +138,25 @@ export default function Login() {
           }}
         />
 
-        {/* Forgot Password */}
-        <Typography
-          component={Link}
-          to="/forgot-password"
-          sx={{
-            display: "block",
-            textAlign: "right",
-            color: "#bd3147",
-            fontSize: 14,
-            textDecoration: "none",
-            mb: 2,
-            "&:hover": { textDecoration: "underline" },
-          }}
-        >
-          Forgot password?
-        </Typography>
-
-        <FormControlLabel
-          control={<Checkbox checked={formData.remember} onChange={handleChange} name="remember" />}
-          label="Remember me"
+        <TextField
+          label="Confirm Password"
+          name="confirmPassword"
+          type={showConfirmPassword ? "text" : "password"}
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          error={!!errors.confirmPassword}
+          helperText={errors.confirmPassword}
+          fullWidth
           sx={{ mb: 2 }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <Button
@@ -155,18 +173,17 @@ export default function Login() {
             fontSize: "1rem",
           }}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Register"}
         </Button>
 
-        {/* Register Link */}
         <Typography sx={{ mt: 3, textAlign: "center", fontSize: 14, color: "#304145" }}>
-          Don’t have an account?{" "}
+          Already have an account?{" "}
           <Typography
             component={Link}
-            to="/register"
+            to="/login"
             sx={{ color: "#bd3147", fontWeight: 600, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
           >
-            Register
+            Login
           </Typography>
         </Typography>
       </Box>
