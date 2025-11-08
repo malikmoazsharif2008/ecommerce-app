@@ -160,6 +160,12 @@ export default function Navbar() {
             </Button>
           ))}
         </Box>
+<<<<<<< HEAD
+=======
+
+        
+      
+>>>>>>> main
       </Toolbar>
     </AppBar>
   );

@@ -5,11 +5,16 @@ import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+
+import Products from "./pages/Products";
+
+// Admin Pages
+import AdminLayout from "./admin/AdminLayout";
+
 import Dashboard from "./admin/Dashboard";
 import AddProduct from "./admin/AddProduct";
 import ManageProducts from "./admin/ManageProducts";
 import Orders from "./admin/Orders";
-import Products from "./pages/Products"; 
 
 export default function App() {
   return (
@@ -21,15 +26,20 @@ export default function App() {
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
+
        <Route path="/register" element={<Register />} />
+
+        <Route path="/register" element={<Register />} />
+
         <Route path="/products" element={<Products />} />
-        
 
         {/* ADMIN ROUTES */}
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/add-product" element={<AddProduct />} />
-        <Route path="/admin/manage-products" element={<ManageProducts />} />
-        <Route path="/admin/orders" element={<Orders />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="add-product" element={<AddProduct />} />
+          <Route path="manage-products" element={<ManageProducts />} />
+          <Route path="orders" element={<Orders />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
