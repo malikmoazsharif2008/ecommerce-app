@@ -1,60 +1,192 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Button,
   Paper,
+  Button,
+  CircularProgress,
+  TextField,
 } from "@mui/material";
-
-const mockProducts = [
-  { id: 1, name: "iPhone 15", price: 1200 },
-  { id: 2, name: "Samsung S24", price: 999 },
-  { id: 3, name: "MacBook Air", price: 1500 },
-];
+import { db, storage } from "../firebaseConfig";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
 
 export default function ManageProducts() {
-  const handleDelete = (id) => {
-    alert(`🗑️ Deleted product with ID: ${id}`);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    price: "",
+    category: "",
+    description: "",
+  });
+
+  // 🔹 Load all products from Firestore
+  const fetchProducts = async () => {
+    setLoading(true);
+    const snapshot = await getDocs(collection(db, "products"));
+    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setProducts(list);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // 🔹 Delete product from Firestore + Storage
+  const handleDelete = async (id, imageUrl) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      await deleteDoc(doc(db, "products", id));
+      if (imageUrl) {
+        const imageRef = ref(storage, imageUrl);
+        await deleteObject(imageRef).catch(() => {});
+      }
+      alert("🗑 Product deleted");
+      fetchProducts();
+    }
+  };
+
+  // 🔹 Edit (update) product
+  const handleEdit = (product) => {
+    setEditingId(product.id);
+    setEditForm({
+      name: product.name,
+      price: product.price,
+      category: product.category,
+      description: product.description,
+    });
+  };
+
+  const handleUpdate = async (id) => {
+    await updateDoc(doc(db, "products", id), {
+      ...editForm,
+      price: Number(editForm.price),
+    });
+    alert("✅ Product updated");
+    setEditingId(null);
+    fetchProducts();
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: "#f1f1f3", minHeight: "100vh" }}>
-      <Typography variant="h4" color="#303e4c" fontWeight={600} mb={3}>
-        Manage Products
+    <Box>
+      <Typography variant="h5" sx={{ mb: 2, color: "#303e4c" }}>
+        🛠 Manage Products
       </Typography>
-      <Paper sx={{ borderRadius: 3 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#303e4c" }}>
-              <TableCell sx={{ color: "#fff" }}>Name</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Price</TableCell>
-              <TableCell sx={{ color: "#fff" }}>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {mockProducts.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.name}</TableCell>
-                <TableCell>${p.price}</TableCell>
-                <TableCell>
+
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        products.map((p) => (
+          <Paper
+            key={p.id}
+            sx={{
+              p: 2,
+              mb: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            {editingId === p.id ? (
+              <Box sx={{ flexGrow: 1 }}>
+                <TextField
+                  label="Name"
+                  value={editForm.name}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, name: e.target.value })
+                  }
+                  sx={{ mr: 1 }}
+                />
+                <TextField
+                  label="Price"
+                  type="number"
+                  value={editForm.price}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, price: e.target.value })
+                  }
+                  sx={{ mr: 1 }}
+                />
+                <TextField
+                  label="Category"
+                  value={editForm.category}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, category: e.target.value })
+                  }
+                  sx={{ mr: 1 }}
+                />
+                <TextField
+                  label="Description"
+                  value={editForm.description}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, description: e.target.value })
+                  }
+                  sx={{ mr: 1, width: 200 }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={() => handleUpdate(p.id)}
+                  sx={{ backgroundColor: "#303e4c", mr: 1 }}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setEditingId(null)}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            ) : (
+              <>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  {p.imageUrl && (
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      width="80"
+                      height="80"
+                      style={{ objectFit: "cover", borderRadius: 8 }}
+                    />
+                  )}
+                  <Box>
+                    <Typography variant="subtitle1">{p.name}</Typography>
+                    <Typography variant="body2">💰 {p.price} PKR</Typography>
+                    <Typography variant="body2">
+                      🏷 {p.category || "N/A"}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box>
                   <Button
-                    color="error"
-                    onClick={() => handleDelete(p.id)}
-                    variant="contained"
+                    variant="outlined"
+                    sx={{ mr: 1 }}
+                    onClick={() => handleEdit(p)}
                   >
-                    Delete
+                    ✏️ Edit
                   </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => handleDelete(p.id, p.imageUrl)}
+                  >
+                    🗑 Delete
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Paper>
+        ))
+      )}
     </Box>
   );
 }

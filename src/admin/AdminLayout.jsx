@@ -1,67 +1,140 @@
-import React, { useState, useEffect } from "react";
-import { Link, Outlet } from "react-router-dom";
-import AdminLock from "./AdminLock";
+// src/admin/AdminLayout.jsx
+import React from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebaseConfig";
+import {
+  Box,
+  Drawer,
+  Toolbar,
+  List,
+  ListItemButton,
+  ListItemText,
+  AppBar,
+  IconButton,
+  Typography,
+  CssBaseline,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+
+const drawerWidth = 240;
 
 export default function AdminLayout() {
-  const [unlocked, setUnlocked] = useState(false);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
-  useEffect(() => {
-    const hasAccess = localStorage.getItem("adminAccess") === "true";
-    setUnlocked(hasAccess);
-  }, []);
+  const menuItems = [
+    { label: "Dashboard", path: "/admin/dashboard" },
+    { label: "Add Product", path: "/admin/add-product" },
+    { label: "Manage Products", path: "/admin/manage-products" },
+    { label: "Orders", path: "/admin/orders" },
+  ];
 
-  if (!unlocked) {
-    return <AdminLock onUnlock={setUnlocked} />;
-  }
+  const drawer = (
+    <Box sx={{ textAlign: "left", color: "#fff", height: "100%", backgroundColor: "#303e4c" }}>
+      <Toolbar sx={{ px: 2 }}>
+        <Typography variant="h6" sx={{ color: "#fff" }}>
+          Admin Panel
+        </Typography>
+      </Toolbar>
+      <List>
+        {menuItems.map((item) => (
+          <ListItemButton
+            key={item.label}
+            component={Link}
+            to={item.path}
+            sx={{
+              color: "#fff",
+              "&:hover": { backgroundColor: "#394a5a" },
+            }}
+          >
+            <ListItemText primary={item.label} />
+          </ListItemButton>
+        ))}
+        <ListItemButton
+          onClick={async () => {
+            await signOut(auth);
+            navigate("/");
+          }}
+          sx={{ mt: 2, color: "#fff", background: "#bd3147", mx: 2, borderRadius: 1 }}
+        >
+          <ListItemText primary="Logout" />
+        </ListItemButton>
+      </List>
+    </Box>
+  );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f1f1f3" }}>
-      {/* Sidebar */}
-      <aside
-        style={{
-          width: "250px",
-          background: "#303e4c",
-          color: "#fff",
-          padding: "20px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "15px",
+    <Box sx={{ display: "flex" }}>
+      <CssBaseline />
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+          backgroundColor: "#303e4c",
         }}
       >
-        <h2 style={{ marginBottom: "20px" }}>Admin Panel</h2>
-        <Link to="/admin/dashboard" style={linkStyle}>Dashboard</Link>
-        <Link to="/admin/add-product" style={linkStyle}>Add Product</Link>
-        <Link to="/admin/manage-products" style={linkStyle}>Manage Products</Link>
-        <Link to="/admin/orders" style={linkStyle}>Orders</Link>
-        <button
-          onClick={() => {
-            localStorage.removeItem("adminAccess");
-            window.location.reload();
-          }}
-          style={{
-            marginTop: "auto",
-            background: "#ff4d4d",
-            color: "#fff",
-            border: "none",
-            padding: "10px",
-            borderRadius: "8px",
-            cursor: "pointer",
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: "none" } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div">
+            🛠 Admin Dashboard
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      {/* Drawer */}
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": { width: drawerWidth },
           }}
         >
-          Lock
-        </button>
-      </aside>
+          {drawer}
+        </Drawer>
 
-      {/* Main content */}
-      <main style={{ flex: 1, padding: "20px" }}>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: "none", md: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+              backgroundColor: "#303e4c",
+            },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          mt: 8,
+          backgroundColor: "#f5f6f7",
+          minHeight: "100vh",
+        }}
+      >
         <Outlet />
-      </main>
-    </div>
+      </Box>
+    </Box>
   );
 }
-
-const linkStyle = {
-  color: "#fff",
-  textDecoration: "none",
-  fontWeight: "500",
-};

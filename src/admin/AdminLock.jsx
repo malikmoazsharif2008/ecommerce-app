@@ -1,73 +1,58 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "../firebaseConfig";
+import { Box, TextField, Button, Typography } from "@mui/material";
+
+const ADMIN_EMAIL = "malikmoazsharif2008@gmail.com";
 
 export default function AdminLock({ onUnlock }) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleUnlock = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // 👇 yahan apna secret code likho
-    const correctPassword = "admin@123";
-
-    if (password === correctPassword) {
-      localStorage.setItem("adminAccess", "true");
-      onUnlock(true);
-    } else {
-      setError("Incorrect password. Try again.");
+    setLoading(true);
+    setError("");
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      if (user.email === ADMIN_EMAIL) {
+        localStorage.setItem("adminLoggedIn", "true");
+        if (typeof onUnlock === "function") onUnlock();
+      } else {
+        setError("Access Denied: You are not an admin.");
+        await signOut(auth);
+      }
+    } catch (err) {
+      setError("Invalid credentials. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
+  
 
   return (
-    <div
-      style={{
-        height: "100vh",
+    <Box
+      sx={{
+        minHeight: "100vh",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        background: "#303e4c",
+        justifyContent: "center",
+        backgroundColor: "#f7f7f7",
+        p: 2,
       }}
     >
-      <form
-        onSubmit={handleUnlock}
-        style={{
-          background: "#fff",
-          padding: "30px",
-          borderRadius: "10px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-          textAlign: "center",
-          width: "320px",
-        }}
-      >
-        <h2 style={{ marginBottom: "20px" }}>🔒 Admin Access</h2>
-        <input
-          type="password"
-          placeholder="Enter admin key"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            padding: "10px",
-            width: "100%",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-            marginBottom: "10px",
-          }}
-        />
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: "#303e4c",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Unlock
-        </button>
-      </form>
-    </div>
+      <Box component="form" onSubmit={handleLogin} sx={{ width: 340, bgcolor: "white", p: 3, borderRadius: 2, boxShadow: 2 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>🔒 Admin Login</Typography>
+        <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth sx={{ mb: 2 }} />
+        <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} fullWidth sx={{ mb: 1 }} />
+        {error && <Typography color="error" sx={{ mb: 1 }}>{error}</Typography>}
+        <Button type="submit" variant="contained" fullWidth sx={{ backgroundColor: "#bd3147" }} disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </Button>
+      </Box>
+    </Box>
   );
 }

@@ -161,39 +161,8 @@ export default function Navbar() {
           ))}
         </Box>
 
-        {/* 🛒 Cart + 👤 Avatar */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton component={Link} to="/cart" sx={{ color: "#f1f1f3" }}>
-            <Badge badgeContent={2} color="error">
-              <ShoppingCartIcon />
-            </Badge>
-          </IconButton>
-
-          <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-            <Avatar
-              alt="User"
-              src="https://i.pravatar.cc/40"
-              sx={{ width: 36, height: 36 }}
-            />
-          </IconButton>
-          <Menu
-            anchorEl={anchorElUser}
-            open={Boolean(anchorElUser)}
-            onClose={handleCloseUserMenu}
-            PaperProps={{
-              sx: {
-                mt: 1,
-                borderRadius: 2,
-                backgroundColor: "#303e4c",
-                color: "#f1f1f3",
-              },
-            }}
-          >
-            <MenuItem onClick={handleCloseUserMenu}>Profile</MenuItem>
-            <MenuItem onClick={handleCloseUserMenu}>Orders</MenuItem>
-            <MenuItem onClick={handleCloseUserMenu}>Logout</MenuItem>
-          </Menu>
-        </Box>
+        
+      
       </Toolbar>
     </AppBar>
   );
