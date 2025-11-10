@@ -7,8 +7,8 @@ const firebaseConfig = {
   apiKey: "AIzaSyBcXDf4WaCZl7AIgGbb3U1jXY2K0iW2Zkg",
   authDomain: "e-commerce-c3404.firebaseapp.com",
   projectId: "e-commerce-c3404",
-  storageBucket: "e-commerce-c3404.firebasestorage.app",
-  messagingSenderId: "348499212215",
+storageBucket: "e-commerce-c3404.appspot.com", // correct
+ messagingSenderId: "348499212215",
   appId: "1:348499212215:web:87ea6bd7a7672e9ca2da32",
   measurementId: "G-XT3CK14JMT"
 }

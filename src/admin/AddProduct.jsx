@@ -21,45 +21,51 @@ export default function AddProduct() {
     setLoading(true);
 
     try {
-      let imageUrl = "";
+      let imageUrl = ""; // default empty
 
-      // If file selected, upload first
+      // 🔹 If file selected, try to upload image
       if (file) {
-        const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        try {
+          const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+          const uploadTask = uploadBytesResumable(storageRef, file);
 
-        await new Promise((resolve, reject) => {
-          uploadTask.on(
-            "state_changed",
-            (snapshot) => {
-              const prog = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-              setUploadProgress(prog);
-            },
-            (err) => {
-              console.error("Upload error:", err);
-              reject(err);
-            },
-            async () => {
-              imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve();
-            }
-          );
-        });
+          await new Promise((resolve) => {
+            uploadTask.on(
+              "state_changed",
+              (snapshot) => {
+                const prog = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                setUploadProgress(prog);
+              },
+              (err) => {
+                console.error("Upload error:", err);
+                console.warn("Continuing without image...");
+                resolve(); // Firestore will still add product
+              },
+              async () => {
+                imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                resolve();
+              }
+            );
+          });
+        } catch (err) {
+          console.warn("Image upload failed, continuing without image");
+        }
       }
 
-      // Add product to Firestore
-      let  response=  await addDoc(collection(db, "products"), {
+      // 🔹 Add product to Firestore
+      const response = await addDoc(collection(db, "products"), {
         ...form,
         price: Number(form.price),
-        imageUrl,
+        imageUrl, // empty if upload failed
         createdAt: serverTimestamp(),
       });
-      console.log({response})
-      // Reset form
+      console.log({ response });
+
+      // 🔹 Reset form
       setForm({ name: "", price: "", category: "", description: "" });
       setFile(null);
       setUploadProgress(null);
-      alert("Product added successfully!");
+      alert("✅ Product added successfully!");
     } catch (err) {
       console.error("Firestore error:", err);
       alert("Error adding product. Check console for details.");
