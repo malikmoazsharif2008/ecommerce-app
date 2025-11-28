@@ -6,13 +6,27 @@ import {
   Button,
   CircularProgress,
   TextField,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 
-import { supabase } from "../supabaseClient"; // ✅ Supabase import
+import { supabase } from "../supabaseClient";
+
+const extractStoragePath = (publicUrl) => {
+  if (!publicUrl) return null;
+  const marker = "/storage/v1/object/public/product-images/";
+  const markerIndex = publicUrl.indexOf(marker);
+
+  if (markerIndex === -1) return null;
+
+  const rawPath = publicUrl.slice(markerIndex + marker.length);
+  return decodeURIComponent(rawPath.split("?")[0]);
+};
 
 export default function ManageProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ open: false, message: "", severity: "info" });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -21,10 +35,13 @@ export default function ManageProducts() {
     description: "",
   });
 
-  // 🔥 Load products from Supabase
+  // 🔥 Load products
+  const showToast = (message, severity = "info") => {
+    setToast({ open: true, message, severity });
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
-
     const { data, error } = await supabase
       .from("products")
       .select("*")
@@ -32,8 +49,9 @@ export default function ManageProducts() {
 
     if (error) {
       console.error("Fetch error:", error);
+      showToast("Failed to load products. Please check Supabase policies.", "error");
     } else {
-      setProducts(data);
+      setProducts(data || []);
     }
 
     setLoading(false);
@@ -43,36 +61,40 @@ export default function ManageProducts() {
     fetchProducts();
   }, []);
 
-  // 🗑 Delete Product (database + image)
+  // 🗑 DELETE PRODUCT (record + storage image)
   const handleDelete = async (id, imageUrl) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
-    // delete from table
+    // 1) delete product from table
     const { error: deleteErr } = await supabase
       .from("products")
       .delete()
       .eq("id", id);
 
     if (deleteErr) {
-      alert("Error deleting!");
       console.log(deleteErr);
+      showToast("Error deleting product. Check Supabase RLS policies.", "error");
       return;
     }
 
-    // delete from Supabase Storage
-    if (imageUrl) {
-      const path = imageUrl.split("/").pop(); // extract file name
-
-      await supabase.storage
+    // 2) delete file from storage (best effort)
+    const storagePath = extractStoragePath(imageUrl);
+    if (storagePath) {
+      const { error: storageErr } = await supabase.storage
         .from("product-images")
-        .remove([path]);
+        .remove([storagePath]);
+
+      if (storageErr) {
+        console.log("Storage delete error:", storageErr);
+        showToast("Product deleted but failed to remove image file.", "warning");
+      }
     }
 
-    alert("🗑 Product deleted");
+    showToast("🗑 Product deleted", "success");
     fetchProducts();
   };
 
-  // ✏️ Edit product
+  // ✏️ Edit data load
   const handleEdit = (product) => {
     setEditingId(product.id);
     setEditForm({
@@ -94,12 +116,17 @@ export default function ManageProducts() {
       .eq("id", id);
 
     if (error) {
-      alert("Update failed!");
       console.log(error);
+      let message = "Update failed! Please try again.";
+      if (error.message.includes("row-level security")) {
+        message =
+          "Update blocked by Supabase Row Level Security. Ensure UPDATE policy exists for 'products'.";
+      }
+      showToast(message, "error");
       return;
     }
 
-    alert("✅ Product updated");
+    showToast("✅ Product updated", "success");
     setEditingId(null);
     fetchProducts();
   };
@@ -112,6 +139,10 @@ export default function ManageProducts() {
 
       {loading ? (
         <CircularProgress />
+      ) : products.length === 0 ? (
+        <Paper sx={{ p: 3, textAlign: "center" }}>
+          <Typography>No products available. Add some first!</Typography>
+        </Paper>
       ) : (
         products.map((p) => (
           <Paper
@@ -120,19 +151,21 @@ export default function ManageProducts() {
               p: 2,
               mb: 2,
               display: "flex",
-              alignItems: "center",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2,
+              alignItems: { xs: "flex-start", md: "center" },
               justifyContent: "space-between",
             }}
           >
             {editingId === p.id ? (
-              <Box sx={{ flexGrow: 1 }}>
+              <Box sx={{ flexGrow: 1, width: "100%" }}>
                 <TextField
                   label="Name"
                   value={editForm.name}
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
                   }
-                  sx={{ mr: 1 }}
+                  sx={{ mr: 1, mb: { xs: 2, md: 0 } }}
                 />
                 <TextField
                   label="Price"
@@ -141,7 +174,7 @@ export default function ManageProducts() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, price: e.target.value })
                   }
-                  sx={{ mr: 1 }}
+                  sx={{ mr: 1, mb: { xs: 2, md: 0 } }}
                 />
                 <TextField
                   label="Category"
@@ -149,43 +182,53 @@ export default function ManageProducts() {
                   onChange={(e) =>
                     setEditForm({ ...editForm, category: e.target.value })
                   }
-                  sx={{ mr: 1 }}
+                  sx={{ mr: 1, mb: { xs: 2, md: 0 } }}
                 />
                 <TextField
                   label="Description"
                   value={editForm.description}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, description: e.target.value })
+                    setEditForm({
+                      ...editForm,
+                      description: e.target.value,
+                    })
                   }
-                  sx={{ mr: 1, width: 200 }}
+                  sx={{ mr: 1, width: { xs: "100%", md: 200 } }}
+                  multiline
+                  rows={2}
                 />
 
-                <Button
-                  variant="contained"
-                  onClick={() => handleUpdate(p.id)}
-                  sx={{ backgroundColor: "#303e4c", mr: 1 }}
-                >
-                  Save
-                </Button>
+                <Box sx={{ mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUpdate(p.id)}
+                    sx={{ backgroundColor: "#303e4c", mr: 1 }}
+                  >
+                    Save
+                  </Button>
 
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={() => setEditingId(null)}
-                >
-                  Cancel
-                </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={() => setEditingId(null)}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
               </Box>
             ) : (
               <>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  {p.imageUrl && (
+                  {p.image_url && (
                     <img
-                      src={p.imageUrl}
+                      src={p.image_url}
                       alt={p.name}
                       width="80"
                       height="80"
-                      style={{ objectFit: "cover", borderRadius: 8 }}
+                      style={{
+                        objectFit: "cover",
+                        borderRadius: 8,
+                      }}
                     />
                   )}
                   <Box>
@@ -205,10 +248,11 @@ export default function ManageProducts() {
                   >
                     ✏️ Edit
                   </Button>
+
                   <Button
                     variant="contained"
                     color="error"
-                    onClick={() => handleDelete(p.id, p.imageUrl)}
+                    onClick={() => handleDelete(p.id, p.image_url)}
                   >
                     🗑 Delete
                   </Button>
@@ -218,6 +262,21 @@ export default function ManageProducts() {
           </Paper>
         ))
       )}
+
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

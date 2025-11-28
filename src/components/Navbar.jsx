@@ -9,14 +9,13 @@ import {
   MenuItem,
   Slide,
   InputBase,
-  Badge,
-  Avatar,
   Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const pages = [
   { label: "Home", path: "/" },
@@ -28,22 +27,20 @@ const pages = [
 
 export default function Navbar() {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
-  const [anchorElUser, setAnchorElUser] = React.useState(null);
 
   const handleOpenNavMenu = (event) => setAnchorElNav(event.currentTarget);
   const handleCloseNavMenu = () => setAnchorElNav(null);
-
-  const handleOpenUserMenu = (event) => setAnchorElUser(event.currentTarget);
-  const handleCloseUserMenu = () => setAnchorElUser(null);
 
   return (
     <AppBar
       position="sticky"
       sx={{
-        backgroundColor: "#303e4c",
+        background: "linear-gradient(120deg, rgba(15,23,42,0.95), rgba(48,62,76,0.85))",
         color: "#f1f1f3",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-        width: "100vw", // ✅ full screen width
+        boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+        backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        width: "100vw",
         left: 0,
         right: 0,
         top: 0,
@@ -51,6 +48,7 @@ export default function Navbar() {
         padding: 0,
       }}
     >
+      
       <Toolbar
         disableGutters
         sx={{
@@ -62,20 +60,29 @@ export default function Navbar() {
         }}
       >
         {/* 🛍️ Logo */}
-        <Typography
-          variant="h6"
-          component={Link}
-          to="/"
-          sx={{
-            textDecoration: "none",
-            color: "#f1f1f3",
-            fontWeight: 700,
-            fontSize: "1.6rem",
-            "&:hover": { color: "#ffffff" },
-          }}
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          🛍️ E-Shop
-        </Typography>
+          <Typography
+            variant="h6"
+            component={Link}
+            to="/"
+            sx={{
+              textDecoration: "none",
+              color: "#f1f1f3",
+              fontWeight: 700,
+              fontSize: "1.6rem",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              "&:hover": { color: "#ffffff" },
+            }}
+          >
+            🛍️ E-Shop
+          </Typography>
+        </motion.div>
 
         {/* 📱 Mobile Menu */}
         <Box sx={{ display: { xs: "flex", md: "none" } }}>
@@ -142,22 +149,36 @@ export default function Navbar() {
         </Box>
 
         {/* 🖥️ Desktop Menu */}
-        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 3 }}>
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
           {pages.map((page) => (
-            <Button
+            <motion.div
               key={page.label}
-              component={Link}
-              to={page.path}
-              sx={{
-                color: "#f1f1f3",
-                fontWeight: 500,
-                textTransform: "none",
-                fontSize: "1rem",
-                "&:hover": { color: "#ffffff" },
-              }}
+              whileHover={{ y: -2, scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
             >
-              {page.label}
-            </Button>
+              <Button
+                component={Link}
+                to={page.path}
+                sx={{
+                  color: "#f1f1f3",
+                  fontWeight: 500,
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  borderRadius: "999px",
+                  px: 2.5,
+                  backgroundColor:
+                    page.path === "/products" ? "rgba(255,255,255,0.08)" : "transparent",
+                  border: "1px solid transparent",
+                  "&:hover": {
+                    borderColor: "rgba(255,255,255,0.2)",
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                  },
+                }}
+              >
+                {page.label}
+              </Button>
+            </motion.div>
           ))}
         </Box>
 

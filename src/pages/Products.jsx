@@ -9,10 +9,12 @@ import {
   TextField,
   Pagination,
   Snackbar,
+  Chip,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../supabaseClient";
+import { motion } from "framer-motion";
 
 const categories = ["All", "Electronics", "Clothing", "Home & Kitchen", "Books"];
 const PRODUCTS_PER_PAGE = 8;
@@ -24,6 +26,7 @@ export default function Products() {
   const [page, setPage] = useState(1);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // 🔹 Fetch products from Supabase
   useEffect(() => {
@@ -39,6 +42,8 @@ export default function Products() {
         setProductsData(data);
       } catch (err) {
         console.error("Error fetching products:", err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -52,11 +57,13 @@ export default function Products() {
   }, []);
 
   // 🔹 Filter products
-  const filtered = productsData.filter((p) => {
-    const matchCategory = category === "All" || p.category === category;
-    const matchSearch = p.name?.toLowerCase().includes(search.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+  const filtered = useMemo(() => {
+    return productsData.filter((p) => {
+      const matchCategory = category === "All" || p.category === category;
+      const matchSearch = p.name?.toLowerCase().includes(search.toLowerCase());
+      return matchCategory && matchSearch;
+    });
+  }, [productsData, category, search]);
 
   const pageCount = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
   const displayedProducts = filtered.slice(
@@ -82,32 +89,44 @@ export default function Products() {
     <Box
       sx={{
         px: { xs: 2, md: 6 },
-        py: 4,
+        py: 6,
         minHeight: "100vh",
-        backgroundColor: "#bac7ce10",
+        background:
+          "radial-gradient(circle at top, rgba(255,255,255,0.04), transparent 60%)",
       }}
     >
       <Typography
         variant="h4"
         sx={{
           mb: 3,
-          color: "#304145",
+          color: "#f5f7fb",
           fontWeight: 700,
           textAlign: "center",
         }}
       >
-        Products
+        Discover Products
       </Typography>
 
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
         <TextField
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{
             width: { xs: "100%", sm: 400 },
-            backgroundColor: "#fff",
-            borderRadius: 2,
+            backgroundColor: "rgba(255,255,255,0.08)",
+            borderRadius: 3,
+            input: { color: "#fff" },
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(255,255,255,0.2)",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(255,255,255,0.4)",
+            },
+            "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+              {
+                borderColor: "var(--primary)",
+              },
           }}
         />
       </Box>
@@ -117,104 +136,118 @@ export default function Products() {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
-          gap: 2,
+          gap: 1,
           mb: 4,
         }}
       >
         {categories.map((cat) => (
-          <Button
+          <Chip
             key={cat}
-            variant={category === cat ? "contained" : "outlined"}
+            label={cat}
             onClick={() => {
               setCategory(cat);
               setPage(1);
             }}
+            color={category === cat ? "primary" : "default"}
             sx={{
-              backgroundColor: category === cat ? "#bd3147" : "#fff",
-              color: category === cat ? "#fff" : "#304145",
-              borderColor: "#bd3147",
-              "&:hover": { backgroundColor: "#a02a3d", color: "#fff" },
-              textTransform: "none",
+              px: 1.5,
+              py: 0.5,
+              backgroundColor:
+                category === cat ? "var(--primary)" : "rgba(255,255,255,0.08)",
+              color: "#fff",
+              borderRadius: "999px",
+              border:
+                category === cat
+                  ? "1px solid rgba(255,255,255,0.4)"
+                  : "1px solid rgba(255,255,255,0.1)",
+              cursor: "pointer",
             }}
-          >
-            {cat}
-          </Button>
+          />
         ))}
       </Box>
 
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2,1fr)",
-            md: "repeat(3,1fr)",
-            lg: "repeat(4,1fr)",
-          },
-          gap: 3,
-        }}
-      >
-        {displayedProducts.length > 0 ? (
-          displayedProducts.map((product) => (
-            <Card
-              key={product.id}
-              sx={{
-                borderRadius: 2,
-                boxShadow: 3,
-                transition: "0.3s",
-                "&:hover": { transform: "translateY(-5px)", boxShadow: 6 },
-              }}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+          <Typography>Loading products...</Typography>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2,1fr)",
+              md: "repeat(3,1fr)",
+              lg: "repeat(4,1fr)",
+            },
+            gap: 3,
+          }}
+        >
+          {displayedProducts.length > 0 ? (
+            displayedProducts.map((product, idx) => (
+              <Card
+                key={product.id}
+                component={motion.div}
+                whileHover={{ y: -6 }}
+                transition={{ delay: idx * 0.02 }}
+                className="glass-card"
+                sx={{ overflow: "hidden" }}
+              >
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={product.image_url || "https://via.placeholder.com/400"}
+                  alt={product.name}
+                  sx={{ objectFit: "cover" }}
+                />
+                <CardContent>
+                  <Typography variant="h6" sx={{ color: "#fff", mb: 1 }}>
+                    {product.name}
+                  </Typography>
+                  <Typography
+                    sx={{ color: "var(--accent)", fontWeight: 600, mb: 2 }}
+                  >
+                    ${product.price}
+                  </Typography>
+                  <Button
+                    component={Link}
+                    to={`/product/${product.id}`}
+                    variant="outlined"
+                    sx={{
+                      borderColor: "rgba(255,255,255,0.3)",
+                      color: "#fff",
+                      textTransform: "none",
+                      mb: 1,
+                      width: "100%",
+                      "&:hover": { borderColor: "#fff" },
+                    }}
+                  >
+                    View details
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleAddToCart(product)}
+                    sx={{
+                      background:
+                        "linear-gradient(135deg, var(--primary), var(--primary-dark))",
+                      width: "100%",
+                    }}
+                  >
+                    Add to cart
+                  </Button>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Typography
+              variant="h6"
+              sx={{ textAlign: "center", color: "#f5f5f5", gridColumn: "1 / -1" }}
             >
-              <CardMedia
-                component="img"
-                height="180"
-                // ✅ Supabase image URL, fallback placeholder if null
-                image={product.image_url || "https://via.placeholder.com/200"}
-                alt={product.name}
-              />
-              <CardContent sx={{ backgroundColor: "#bac7ce" }}>
-                <Typography variant="h6" sx={{ color: "#304145", mb: 1 }}>
-                  {product.name}
-                </Typography>
-                <Typography sx={{ color: "#bd3147", fontWeight: 600, mb: 2 }}>
-                  ${product.price}
-                </Typography>
-                <Button
-                  component={Link}
-                  to={`/product/${product.id}`}
-                  variant="contained"
-                  sx={{
-                    backgroundColor: "#304145",
-                    "&:hover": { backgroundColor: "#3b4a58" },
-                    width: "100%",
-                    mb: 1,
-                  }}
-                >
-                  View Details
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => handleAddToCart(product)}
-                  sx={{
-                    backgroundColor: "#bd3147",
-                    "&:hover": { backgroundColor: "#a02a3d" },
-                    width: "100%",
-                  }}
-                >
-                  Add to Cart
-                </Button>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Typography
-            variant="h6"
-            sx={{ textAlign: "center", color: "#555", gridColumn: "1 / -1" }}
-          >
-            No products found.
-          </Typography>
-        )}
-      </Box>
+              No products found.
+            </Typography>
+          )}
+        </Box>
+      )}
 
       {pageCount > 1 && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
