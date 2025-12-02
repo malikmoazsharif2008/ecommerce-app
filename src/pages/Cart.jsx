@@ -2,7 +2,6 @@ import { Box, Typography, Button, IconButton, TextField, Divider, Dialog, Dialog
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useState, useEffect } from "react";
 
-// Load cart from localStorage or use default
 const getInitialCart = () => {
   const savedCart = localStorage.getItem("cart");
   return savedCart ? JSON.parse(savedCart) : [
@@ -86,11 +85,12 @@ export default function Cart() {
                 boxShadow: 2,
               }}
             >
-              <img
-                src={item.imageUrl || "https://via.placeholder.com/150"}
-                alt={item.name}
-                style={{ width: 100, height: 100, borderRadius: 8, objectFit: "cover" }}
-              />
+             <img
+  src={item.imageUrl || item.image_url || "https://via.placeholder.com/150"}
+  alt={item.name}
+  style={{ width: 100, height: 100, borderRadius: 8, objectFit: "cover" }}
+/>
+
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h6" sx={{ color: "#304145" }}>{item.name}</Typography>
                 <Typography sx={{ color: "#bd3147", fontWeight: 600 }}>${item.price}</Typography>
