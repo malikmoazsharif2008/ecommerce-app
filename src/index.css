@@ -91,3 +91,7 @@ textarea {
     transform: translateY(-12px);
   }
 }
+.snackbar {
+  background: white;
+  color: black;
+}

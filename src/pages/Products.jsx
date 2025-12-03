@@ -256,6 +256,22 @@ export default function Products() {
             page={page}
             onChange={(e, value) => setPage(value)}
             color="primary"
+            sx={{
+              "& .MuiPaginationItem-root": {
+                color: "#fff",
+                borderColor: "rgba(255,255,255,0.3)",
+              },
+              "& .MuiPaginationItem-page": {
+                color: "#fff",
+              },
+              "& .MuiPaginationItem-page.Mui-selected": {
+                backgroundColor: "var(--primary)",
+                color: "#fff",
+              },
+              "& .MuiPaginationItem-icon": {
+                color: "#fff",
+              },
+            }}
           />
         </Box>
       )}
@@ -266,6 +282,13 @@ export default function Products() {
         message="Added to cart!"
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        ContentProps={{
+          sx: {
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            color: "#fff",
+            fontWeight: 500,
+          },
+        }}
       />
     </Box>
   );

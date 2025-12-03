@@ -8,6 +8,8 @@ import {
   Typography,
   MenuItem,
   LinearProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { supabase } from "../supabaseClient";
 
@@ -19,14 +21,20 @@ export default function AddProduct() {
     price: "",
     category: "",
     description: "",
-    imageUrlInput: "", // For internet URL
+    imageUrlInput: "",
   });
+
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Preview for local file
+  // Snackbar State
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState("");
+  const [snackbarType, setSnackbarType] = useState("success"); // success / error
+
+  // Preview for uploaded file OR URL
   useEffect(() => {
     if (file) {
       const url = URL.createObjectURL(file);
@@ -42,41 +50,38 @@ export default function AddProduct() {
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
+  const showMessage = (msg, type = "success") => {
+    setSnackbarMsg(msg);
+    setSnackbarType(type);
+    setSnackbarOpen(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price)
-      return alert("Name & Price are required!");
+      return showMessage("Name & Price required!", "error");
 
     setLoading(true);
     let finalImageUrl = form.imageUrlInput || null;
 
     try {
-      // Upload local file if selected
+      // Upload local file
       if (file) {
         if (!file.type.startsWith("image/")) {
-          alert("Please select a valid image file!");
           setLoading(false);
-          return;
+          return showMessage("Invalid file! Please select an image.", "error");
         }
 
         const fileName = `${Date.now()}_${file.name.replace(/\s+/g, "_")}`;
         setUploadProgress(0);
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from("product-images")
-          .upload(fileName, file, {
-            upsert: false,
-            contentType: file.type,
-            cacheControl: "3600",
-          });
+          .upload(fileName, file);
 
         if (uploadError) {
-          console.error("Upload error:", uploadError);
-          alert(
-            "Image upload failed! Check your bucket policy, RLS, and bucket name."
-          );
           setLoading(false);
-          return;
+          return showMessage("Image upload failed!", "error");
         }
 
         const { data: urlData } = supabase.storage
@@ -87,7 +92,7 @@ export default function AddProduct() {
         setUploadProgress(100);
       }
 
-      // Insert product into Supabase
+      // Insert into DB
       const { error: insertError } = await supabase.from("products").insert([
         {
           name: form.name,
@@ -101,7 +106,7 @@ export default function AddProduct() {
 
       if (insertError) throw insertError;
 
-      alert("✔ Product Added Successfully!");
+      showMessage("✔ Product Added Successfully!", "success");
 
       // Reset form
       setForm({
@@ -113,9 +118,9 @@ export default function AddProduct() {
       });
       setFile(null);
       setUploadProgress(null);
+
     } catch (err) {
-      console.error("Error:", err);
-      alert("Error: " + err.message);
+      showMessage("Error: " + err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -137,6 +142,7 @@ export default function AddProduct() {
             fullWidth
             sx={{ mb: 2 }}
           />
+
           <TextField
             label="Price"
             name="price"
@@ -146,6 +152,7 @@ export default function AddProduct() {
             fullWidth
             sx={{ mb: 2 }}
           />
+
           <TextField
             select
             label="Category"
@@ -161,6 +168,7 @@ export default function AddProduct() {
               </MenuItem>
             ))}
           </TextField>
+
           <TextField
             label="Description"
             name="description"
@@ -172,7 +180,6 @@ export default function AddProduct() {
             sx={{ mb: 2 }}
           />
 
-          {/* Image input */}
           <TextField
             label="Image URL (optional)"
             name="imageUrlInput"
@@ -187,6 +194,7 @@ export default function AddProduct() {
             <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
               OR Upload Local File
             </Typography>
+
             <input
               type="file"
               accept="image/*"
@@ -199,11 +207,10 @@ export default function AddProduct() {
                 width: "100%",
               }}
             />
+
             {previewUrl && (
               <Box sx={{ mt: 2, mb: 2 }}>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  Preview:
-                </Typography>
+                <Typography variant="body2">Preview:</Typography>
                 <img
                   src={previewUrl}
                   alt="Preview"
@@ -223,14 +230,6 @@ export default function AddProduct() {
           {uploadProgress !== null && (
             <Box sx={{ mb: 2 }}>
               <LinearProgress variant="determinate" value={uploadProgress} />
-              <Typography
-                variant="body2"
-                sx={{ mt: 1, textAlign: "center" }}
-              >
-                {uploadProgress < 100
-                  ? `Uploading... ${uploadProgress}%`
-                  : "Upload Complete!"}
-              </Typography>
             </Box>
           )}
 
@@ -244,6 +243,25 @@ export default function AddProduct() {
           </Button>
         </form>
       </Paper>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2500}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbarType}
+          sx={{
+            width: "100%",
+            backgroundColor: snackbarType === "success" ? "#d4ffd4" : "#ffd4d4",
+            color: "#000",
+          }}
+        >
+          {snackbarMsg}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -74,14 +74,7 @@ export default function Dashboard() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={4}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="subtitle2">Orders</Typography>
-            <Typography variant="h5" fontWeight={700}>
-              {ordersCount}
-            </Typography>
-          </Paper>
-        </Grid>
+        
 
         <Grid item xs={12} sm={4}>
           <Paper sx={{ p: 3 }}>

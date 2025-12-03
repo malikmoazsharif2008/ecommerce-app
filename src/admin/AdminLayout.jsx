@@ -26,7 +26,7 @@ export default function AdminLayout() {
     { label: "Dashboard", path: "/admin/dashboard" },
     { label: "Add Product", path: "/admin/add-product" },
     { label: "Manage Products", path: "/admin/manage-products" },
-    { label: "Orders", path: "/admin/orders" },
+    
   ];
 
   const drawer = (
